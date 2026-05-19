@@ -455,8 +455,90 @@ ws.row_dimensions[row].height=25
 
 widths(ws,A=42,B=18,C=18,D=18,E=50)
 
+# === Лист NPV_IRR ===
+ws=wb.create_sheet('NPV_IRR')
+ws['A1']='Инвестиционные показатели сценария S3 (NPV, Payback, ROI)'
+ws['A1'].font=TITLE
+ws.merge_cells('A1:E1')
+
+# Денежные потоки
+ws['A3']='Денежные потоки сценария S3 (млн руб.)'
+ws['A3'].font=SUBHEAD; ws['A3'].fill=SUBHEAD_FILL
+ws.merge_cells('A3:E3')
+
+cf_data=[
+    ('Год 0 (запуск, capex)',-8,'Capex на IT-инфраструктуру УПС (геозоны, push-таргетинг, движок стимулов)'),
+    ('Год 1 (operating)',+33,'Чистый эффект 25 + перенос capex 8 из Y1 в Y0 = 33 млн руб. операционного потока'),
+    ('Год 2',+90,'Середина диапазона +80...+100 (тиражирование УПС на 4 R2-города)'),
+    ('Год 3',+90,'Стабилизация эффекта без новых тиражирований'),
+]
+row=4
+cell(ws,row,1,'Период',font=HEAD,fill=HEAD_FILL,align=Alignment(horizontal='center'))
+cell(ws,row,2,'CF, млн руб.',font=HEAD,fill=HEAD_FILL,align=Alignment(horizontal='center'))
+cell(ws,row,3,'Комментарий',font=HEAD,fill=HEAD_FILL,align=Alignment(horizontal='center'))
+ws.merge_cells(start_row=row,start_column=3,end_row=row,end_column=5)
+row+=1
+for period, cf, note in cf_data:
+    cell(ws,row,1,period,font=NORMAL)
+    cell(ws,row,2,cf,font=TOTAL,fill=BAD_FILL if cf<0 else GOOD_FILL,fmt='+#,##0;-#,##0;0')
+    cell(ws,row,3,note,font=NORMAL,align=Alignment(wrap_text=True))
+    ws.merge_cells(start_row=row,start_column=3,end_row=row,end_column=5)
+    row+=1
+
+# Расчёт NPV для разных WACC
+def npv(cf, r):
+    return sum(c / (1+r)**t for t, c in enumerate(cf))
+
+cf=[-8, 33, 90, 90]
+row+=1
+ws.cell(row=row,column=1,value='Расчёт NPV для разных ставок дисконтирования').font=SUBHEAD
+ws.cell(row=row,column=1).fill=SUBHEAD_FILL
+ws.merge_cells(start_row=row,start_column=1,end_row=row,end_column=5)
+row+=1
+cell(ws,row,1,'WACC',font=HEAD,fill=HEAD_FILL,align=Alignment(horizontal='center'))
+cell(ws,row,2,'NPV, млн руб.',font=HEAD,fill=HEAD_FILL,align=Alignment(horizontal='center'))
+cell(ws,row,3,'Комментарий',font=HEAD,fill=HEAD_FILL,align=Alignment(horizontal='center'))
+ws.merge_cells(start_row=row,start_column=3,end_row=row,end_column=5)
+row+=1
+wacc_rows=[
+    (0.15,'Только для сопоставления (ниже текущей ключевой ставки)'),
+    (0.20,'Сценарий снижения ключевой ставки ЦБ'),
+    (0.22,'БАЗОВЫЙ: ключевая ставка ЦБ 21 % + 1 п.п. риск-премии'),
+    (0.25,'Консервативный: ключевая ставка + 4 п.п. риск-премии'),
+    (0.30,'Очень консервативный'),
+]
+for r, note in wacc_rows:
+    npv_val = npv(cf, r)
+    is_base = abs(r-0.22)<0.001
+    cell(ws,row,1,f'{int(r*100)} %',font=TOTAL if is_base else NORMAL,fill=TOTAL_FILL if is_base else None,align=Alignment(horizontal='center'))
+    cell(ws,row,2,round(npv_val,1),font=BIG_TOTAL if is_base else TOTAL,fill=GOOD_FILL,fmt='+#,##0.0;-#,##0.0;0.0')
+    cell(ws,row,3,note,font=NORMAL,align=Alignment(wrap_text=True))
+    ws.merge_cells(start_row=row,start_column=3,end_row=row,end_column=5)
+    row+=1
+
+# Другие показатели
+row+=1
+ws.cell(row=row,column=1,value='Другие показатели инвестиционной привлекательности').font=SUBHEAD
+ws.cell(row=row,column=1).fill=SUBHEAD_FILL
+ws.merge_cells(start_row=row,start_column=1,end_row=row,end_column=5)
+row+=1
+other_metrics=[
+    ('Период окупаемости (Payback), мес.','≈ 8','48 млн затрат / (73 млн эффекта / 12 мес) ≈ 7,9 мес'),
+    ('ROI год 1','52 %','25 / 48 × 100'),
+    ('ROI год 2','243 %','90 / 37 × 100'),
+    ('IRR',' > 100 % (не информативен)','Низкая капитальная интенсивность делает IRR гипертрофированной; для таких проектов корректнее использовать NPV и payback'),
+]
+for metric, val, note in other_metrics:
+    cell(ws,row,1,metric,font=NORMAL)
+    cell(ws,row,2,val,font=TOTAL,fill=TOTAL_FILL,align=Alignment(horizontal='center'))
+    cell(ws,row,3,note,font=NORMAL,align=Alignment(wrap_text=True))
+    ws.merge_cells(start_row=row,start_column=3,end_row=row,end_column=5)
+    row+=1
+
+widths(ws,A=42,B=22,C=20,D=20,E=20)
+
 # Порядок листов
-order=['README','Данные_Юрент','Затраты','УПС_расчёт','Эффекты','Сводная_финмодель','Чувствительность']
+order=['README','Данные_Юрент','Затраты','УПС_расчёт','Эффекты','Сводная_финмодель','Чувствительность','NPV_IRR']
 wb._sheets=[wb[name] for name in order]
 out=Path('/workspace/vkr/VKR_findata.xlsx')
 wb.save(out)
