@@ -501,15 +501,15 @@ cell(ws,row,3,'Комментарий',font=HEAD,fill=HEAD_FILL,align=Alignment(
 ws.merge_cells(start_row=row,start_column=3,end_row=row,end_column=5)
 row+=1
 wacc_rows=[
-    (0.15,'Только для сопоставления (ниже текущей ключевой ставки)'),
-    (0.20,'Сценарий снижения ключевой ставки ЦБ'),
-    (0.22,'БАЗОВЫЙ: ключевая ставка ЦБ 21 % + 1 п.п. риск-премии'),
-    (0.25,'Консервативный: ключевая ставка + 4 п.п. риск-премии'),
-    (0.30,'Очень консервативный'),
+    (0.15,'Только для сопоставления (мягкий сценарий)'),
+    (0.18,'Снижение ключевой ставки ЦБ ниже сценария'),
+    (0.20,'БАЗОВЫЙ: ориентир стоимости капитала цифрового сегмента группы МТС в условиях снижения ключевой ставки к 2026 г.'),
+    (0.23,'Консервативный: +3 п.п. к базовому за счёт риск-премии сегмента'),
+    (0.25,'Очень консервативный'),
 ]
 for r, note in wacc_rows:
     npv_val = npv(cf, r)
-    is_base = abs(r-0.22)<0.001
+    is_base = abs(r-0.20)<0.001
     cell(ws,row,1,f'{int(r*100)} %',font=TOTAL if is_base else NORMAL,fill=TOTAL_FILL if is_base else None,align=Alignment(horizontal='center'))
     cell(ws,row,2,round(npv_val,1),font=BIG_TOTAL if is_base else TOTAL,fill=GOOD_FILL,fmt='+#,##0.0;-#,##0.0;0.0')
     cell(ws,row,3,note,font=NORMAL,align=Alignment(wrap_text=True))
