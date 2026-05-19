@@ -63,6 +63,10 @@ BORDER=Border(left=Side(style='thin',color='999999'),right=Side(style='thin',col
               top=Side(style='thin',color='999999'),bottom=Side(style='thin',color='999999'))
 
 def cell(ws,row,col,value,font=NORMAL,fill=None,align=None,border=BORDER,fmt=None):
+    # Если value — строка, начинающаяся с '=', openpyxl запишет её как формулу.
+    # Чтобы строки-объяснения с '=' оставались просто текстом, заменим на префикс «расчёт: »
+    if isinstance(value, str) and value.startswith('='):
+        value = 'расчёт: ' + value[1:].lstrip()
     c=ws.cell(row=row,column=col,value=value)
     c.font=font
     if fill: c.fill=fill
