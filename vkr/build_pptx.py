@@ -70,7 +70,7 @@ def add_title(s, text, top=0.45, left=0.5, width=12.3, height=1.0, size=24):
     p.line_spacing = 1.1
     return tb
 
-def add_text(s, text, left, top, width, height, size=14, bold=False, color=DARK, align=PP_ALIGN.LEFT, ls=1.2):
+def add_text(s, text, left, top, width, height, size=14, bold=False, italic=False, color=DARK, align=PP_ALIGN.LEFT, ls=1.2):
     tb = s.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
     tf = tb.text_frame; tf.word_wrap = True
     tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = Pt(2)
@@ -79,7 +79,7 @@ def add_text(s, text, left, top, width, height, size=14, bold=False, color=DARK,
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.alignment = align; p.line_spacing = ls
         r = p.add_run(); r.text = line
-        r.font.name = FONT; r.font.size = Pt(size); r.font.bold = bold; r.font.color.rgb = color
+        r.font.name = FONT; r.font.size = Pt(size); r.font.bold = bold; r.font.italic = italic; r.font.color.rgb = color
     return tb
 
 def add_card(s, left, top, width, height, fill=LIGHT, line=None, radius=0):
@@ -123,6 +123,13 @@ def add_subtitle(s, text, top=1.5, left=0.5, width=12.3, size=14, color=GRAY):
 def set_notes(s, text):
     s.notes_slide.notes_text_frame.text = text
 
+def add_punchline(s, text):
+    """Однострочная подсказка-итог внизу слайда (над футером).
+    Делает структуру 'заголовок-вывод сверху + доказательство в теле + усилитель снизу'."""
+    add_card(s, 0.5, 6.65, 12.33, 0.4, fill=DARK)
+    add_text(s, text, 0.5, 6.7, 12.33, 0.3, size=11, bold=True,
+             color=WHITE, align=PP_ALIGN.CENTER)
+
 TOTAL = 16  # основных слайдов, бэкап нумеруется отдельно
 
 # ============================== СЛАЙД 1: ТИТУЛЬНЫЙ ==============================
@@ -135,17 +142,38 @@ add_text(s, 'Москва · 2026', 0.5, 6.6, 4.5, 0.4, size=12, color=WHITE)
 
 # Title
 add_text(s, 'Конкурентная стратегия\nМТС Юрент на региональных\nрынках кикшеринга в России',
-         6.0, 1.5, 7.0, 3.2, size=30, bold=True, color=DARK, ls=1.15)
-# Author + supervisor
-add_text(s, 'Автор', 6.0, 5.0, 3.5, 0.3, size=11, color=GRAY)
-add_text(s, 'Камашев Пётр', 6.0, 5.3, 3.5, 0.4, size=16, bold=True, color=DARK)
-add_text(s, 'Научный руководитель', 6.0, 5.9, 5, 0.3, size=11, color=GRAY)
-add_text(s, 'профессор И. А. Егоров', 6.0, 6.2, 5, 0.4, size=16, bold=True, color=DARK)
+         6.0, 0.9, 7.0, 2.5, size=28, bold=True, color=DARK, ls=1.15)
 
-set_notes(s, 'Стартовая фраза:\n«Добрый день, уважаемые члены государственной экзаменационной комиссии. '
+# Подзаголовок-вопрос (из v3)
+add_text(s, 'Как МТС Юренту перейти от роста через парк к управлению отдачей регионального портфеля?',
+         6.0, 3.6, 7.0, 1.0, size=15, italic=False, color=GRAY, ls=1.3)
+
+# Логическая лента (из v3, доработана)
+flow = ['Диагноз города', 'Выбор режима', 'Рычаги в сезоне', 'KPI', 'Эффект']
+fy = 5.0; fw = 1.3; fgap = 0.05
+fx = 6.0
+for i, step in enumerate(flow):
+    add_card(s, fx, fy, fw, 0.5, fill=LIGHT)
+    add_text(s, step, fx, fy+0.13, fw, 0.3, size=9, bold=True, color=DARK, align=PP_ALIGN.CENTER)
+    fx += fw + fgap
+    if i < len(flow) - 1:
+        # Arrow gap is just spacing
+        pass
+
+# Author + supervisor
+add_text(s, 'Автор', 6.0, 5.8, 3.5, 0.3, size=11, color=GRAY)
+add_text(s, 'Камашев Пётр', 6.0, 6.1, 3.5, 0.4, size=15, bold=True, color=DARK)
+add_text(s, 'Научный руководитель', 9.5, 5.8, 4, 0.3, size=11, color=GRAY)
+add_text(s, 'профессор И. А. Егоров', 9.5, 6.1, 4, 0.4, size=15, bold=True, color=DARK)
+
+set_notes(s, 'Стартовая фраза (учить наизусть):\n\n'
+              '«Добрый день, уважаемые члены государственной экзаменационной комиссии. '
               'Меня зовут Пётр Камашев, я представляю выпускную квалификационную работу на тему '
               '"Конкурентная стратегия МТС Юрент на региональных рынках кикшеринга в России". '
-              'Научный руководитель — профессор Иван Александрович Егоров».')
+              'Научный руководитель — профессор Иван Александрович Егоров.\n\n'
+              'Центральный вопрос работы — как МТС Юренту перейти от роста через расширение парка '
+              'к управлению отдачей уже сформированного регионального портфеля. '
+              'Работа выстроена как цепочка из пяти шагов: диагноз города, выбор режима, рычаги в сезоне, KPI и эффект».')
 
 # ============================== СЛАЙД 2: УПРАВЛЕНЧЕСКАЯ ПРОБЛЕМА ==============================
 s = add_slide()
@@ -217,7 +245,7 @@ for i, (top, bot) in enumerate(labels):
         add_arrow(s, x+block_w, y+0.85, x+block_w+arrow_gap, y+0.85, color=GRAY, weight=1.2)
 
 # 7 задач
-add_text(s, '7 задач работы', 0.5, 5.0, 12.3, 0.4, size=12, bold=True, color=DARK)
+add_text(s, '7 задач работы', 0.5, 4.85, 12.3, 0.4, size=12, bold=True, color=DARK)
 tasks = ('1. Систематизация литературы и обоснование критериев · '
          '2. Диагностика российского рынка кикшеринга 2022–2025 · '
          '3. Иерархия факторов регионального различения\n'
@@ -225,8 +253,9 @@ tasks = ('1. Систематизация литературы и обоснов
          '5. Сопоставление сценариев S1–S3 · '
          '6. Проектный инструмент УПС · '
          '7. Финансовая модель сценария S3')
-add_text(s, tasks, 0.5, 5.4, 12.3, 1.5, size=11.5, color=GRAY, ls=1.4)
+add_text(s, tasks, 0.5, 5.25, 12.3, 1.3, size=11.5, color=GRAY, ls=1.4)
 
+add_punchline(s, 'Выход работы — система S3, каркас режимов R1–R3, инструмент УПС и финансовая модель на демонстрационном портфеле')
 add_footer(s, 3, TOTAL)
 set_notes(s, 'Ключевая мысль: вся работа выстроена как линейная цепочка от диагностики к измеримому эффекту. '
               '«Цель работы — разработать аналитическую систему стратегического выбора и применить её к МТС Юрент. '
@@ -277,8 +306,9 @@ for i, (head, items) in enumerate(cols):
 add_text(s, 'Использование ИИ: ChatGPT и Claude — обработка источников, форматирование, редактура. '
             'Стратегические решения, выбор сценария, интерпретация данных и параметры финмодели — авторские. '
             'Декларация — Приложение А ВКР.',
-         0.5, 6.55, 12.3, 0.5, size=10, color=GRAY, ls=1.2)
+         0.5, 6.27, 12.3, 0.35, size=10, color=GRAY, ls=1.2)
 
+add_punchline(s, 'База достаточна для предварительного выбора стратегии и дизайна пилота; апробация — этап пилота')
 add_footer(s, 4, TOTAL)
 set_notes(s, 'Ключевая мысль: выводы опираются на сочетание академической рамки, экспертной перспективы и внутренней операционной отчётности. '
               '«Теоретическая основа — пять линий: ресурсная теория фирмы, концепция динамических способностей, теория платформенной конкуренции, '
@@ -306,6 +336,7 @@ for (title, num, body), (x, y) in zip(pestel, positions):
     add_bignum(s, num, x+0.3, y+0.55, 2.7, 0.9, size=32, color=RED, align=PP_ALIGN.LEFT)
     add_text(s, body, x+3.3, y+0.25, cw-3.5, ch-0.4, size=11.5, color=DARK, ls=1.35)
 
+add_punchline(s, 'Прежняя логика расширения парка и географии перестаёт быть достаточным основанием конкурентной борьбы')
 add_footer(s, 5, TOTAL)
 set_notes(s, 'Ключевая мысль: экстенсивная модель расширения не выдерживает экономики покрытия в новых условиях. '
               '«На объект одновременно воздействуют четыре фактора. Рынок: поездки на рынке снизились на 6 %, у лидера Whoosh — на 7 %, '
@@ -366,8 +397,9 @@ for r_i, row in enumerate(rows):
 
 # Footnote
 add_text(s, 'Источник: внутренние поквартальные данные МТС Юрент 2024 / 9 мес. 2025 (эксперт А.). Позиция МТС Юрент во всех 5 городах — преследователь.',
-         0.7, 6.85, 12, 0.3, size=10, color=GRAY)
+         0.7, 6.27, 12, 0.3, size=10, color=GRAY)
 
+add_punchline(s, 'Параметры расходятся в 4× по утилизации и в широком диапазоне по динамике — единый режим по портфелю невозможен')
 add_footer(s, 6, TOTAL)
 set_notes(s, 'Ключевая мысль: единая стратегия по такому портфелю физически невозможна — параметры расходятся в разные стороны. '
               '«На демонстрационном портфеле из пяти городов разрыв утилизации между крайними точками — почти в четыре раза, '
@@ -400,23 +432,24 @@ for i, (name, role, fleet, logic, fill) in enumerate(ops):
     add_text(s, logic, x+0.2, y_op+1.32, op_w-0.4, 0.45, size=10.5, color=sub, ls=1.2)
 
 # Big number — гэп
-add_card(s, 0.7, 4.0, 6.0, 2.85, fill=VLIGHT)
+add_card(s, 0.7, 4.0, 6.0, 2.5, fill=VLIGHT)
 add_text(s, 'Гэп с лидером — в эффективности, не в размере парка',
-         0.95, 4.15, 5.5, 0.4, size=12, color=GRAY)
-add_bignum(s, '49  vs  67', 0.95, 4.55, 5.5, 1.4, size=64, color=RED, align=PP_ALIGN.LEFT)
-add_text(s, 'тыс. руб. — выручка на 1 самокат в год\nМТС Юрент против Whoosh',
-         0.95, 5.95, 5.5, 0.7, size=12, color=DARK, ls=1.3)
+         0.95, 4.1, 5.5, 0.35, size=12, color=GRAY)
+add_bignum(s, '49  vs  67', 0.95, 4.45, 5.5, 1.3, size=58, color=RED, align=PP_ALIGN.LEFT)
+add_text(s, 'тыс. руб. — выручка на 1 самокат в год · МТС Юрент против Whoosh',
+         0.95, 5.85, 5.5, 0.5, size=11.5, color=DARK, ls=1.2)
 
 # КФУ block
-add_card(s, 6.95, 4.0, 5.75, 2.85, fill=LIGHT)
-add_text(s, 'Ключевые факторы успеха на зрелой стадии', 7.2, 4.15, 5.5, 0.4, size=12, bold=True, color=DARK)
+add_card(s, 6.95, 4.0, 5.75, 2.5, fill=LIGHT)
+add_text(s, 'Ключевые факторы успеха на зрелой стадии', 7.2, 4.1, 5.5, 0.35, size=12, bold=True, color=DARK)
 add_text(s, '1.  Фактическая доступность самоката в нужной точке и в нужное время',
-         7.2, 4.55, 5.4, 0.6, size=12, color=DARK, ls=1.2)
-add_text(s, '2.  Экономика на единицу парка', 7.2, 5.2, 5.4, 0.3, size=11.5, color=GRAY)
-add_text(s, '3.  Операционная исполнимость', 7.2, 5.55, 5.4, 0.3, size=11.5, color=GRAY)
-add_text(s, '→ доступность покрытия — критический КФУ;\n   к нему привязан проектный инструмент УПС (Слайд 13)',
-         7.2, 5.95, 5.4, 0.85, size=11, color=RED, ls=1.3)
+         7.2, 4.45, 5.4, 0.55, size=12, color=DARK, ls=1.2)
+add_text(s, '2.  Экономика на единицу парка', 7.2, 5.05, 5.4, 0.3, size=11.5, color=GRAY)
+add_text(s, '3.  Операционная исполнимость', 7.2, 5.4, 5.4, 0.3, size=11.5, color=GRAY)
+add_text(s, '→ доступность покрытия — критический КФУ; к нему привязан УПС (Слайд 13)',
+         7.2, 5.8, 5.4, 0.5, size=10.5, bold=True, color=RED, ls=1.2)
 
+add_punchline(s, 'Гэп закрывается не наращиванием парка, а повышением отдачи от уже размещённого парка')
 add_footer(s, 7, TOTAL)
 set_notes(s, 'Ключевая мысль: гэп с Whoosh возник не из-за меньшего парка, а из-за более низкой эффективности уже размещённого парка. '
               '«Конкурентный анализ показал, что на российском рынке к 2025 году сложилась олигополия трёх операторов с долей 96,8 %. '
@@ -458,11 +491,11 @@ for i, (h, b) in enumerate(weak):
     add_text(s, h, 7.2, y, col_w_int-0.4, 0.35, size=12.5, bold=True, color=DARK)
     add_text(s, b, 7.2, y+0.35, col_w_int-0.4, 0.45, size=11, color=GRAY, ls=1.2)
 
-# Conclusion strip
-add_card(s, 0.7, 6.35, 12.3, 0.55, fill=DARK)
-add_text(s, 'Dynamic capabilities: операционный блок развит, способность перестраивать ресурсы под изменения рынка — в начальной зрелости',
-         0.7, 6.45, 12.3, 0.4, size=12, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+# Dynamic capabilities note (передвинут выше)
+add_text(s, 'Dynamic capabilities: операционный блок развит; способность перестраивать ресурсы под изменения рынка — в начальной зрелости',
+         0.5, 6.25, 12.3, 0.3, size=11, italic=True, color=GRAY, align=PP_ALIGN.CENTER)
 
+add_punchline(s, 'Проблема — не в отсутствии ресурсов, а в том, что текущая модель не превращает их в региональный результат')
 add_footer(s, 8, TOTAL)
 set_notes(s, 'Ключевая мысль: ресурсы есть; проблема — в способе их превращения в результат на неоднородной географии. '
               '«Внутренний анализ показал, что Юрент уже обладает ресурсами для дифференцированной стратегии: экосистема МТС, '
@@ -506,6 +539,7 @@ for i, (n, h, body, fill, txt) in enumerate(boxes):
     if i < 3:
         add_arrow(s, x+bw, y_d+box_h/2, x+bw+bg, y_d+box_h/2, color=GRAY, weight=1.5)
 
+add_punchline(s, 'Нужна управляемая система «город → режим → KPI», а не разовые корректировки по каждому случаю')
 add_footer(s, 9, TOTAL)
 set_notes(s, 'Ключевая мысль: разрыв между неоднородностью рынков и единообразием управленческой логики требует системного, а не локального ответа. '
               '«На основании внешнего и внутреннего анализа стратегический диагноз формулируется следующим образом. '
@@ -565,11 +599,7 @@ for r_i, row in enumerate(crit_table):
                  size=11, bold=bold, color=color, align=align)
         x += col_ws[c_i]
 
-# Conclusion strip
-add_card(s, 0.5, 6.7, 12.33, 0.4, fill=VLIGHT)
-add_text(s, 'S3 уступает только по критерию 3 (исполнимость в горизонте перестройки) — адресовано управленческими компенсаторами (Слайд 15)',
-         0.5, 6.75, 12.33, 0.3, size=11, color=DARK, align=PP_ALIGN.CENTER)
-
+add_punchline(s, 'S3 уступает только по критерию операционной исполнимости в горизонте перестройки — адресовано компенсаторами (Слайд 15)')
 add_footer(s, 10, TOTAL)
 set_notes(s, 'Ключевая мысль: выбор сценария — не голосование по одному критерию, а согласованное сопоставление по пяти. '
               '«На основе диагноза я рассмотрел три стратегических альтернативы — S1, S2, S3. Сравнение проводилось по пяти критериям, '
@@ -606,23 +636,24 @@ for i, (city, mode, reason) in enumerate(cities):
     add_text(s, mode, x+0.15, y_c+0.62, c_w-0.3, 0.4, size=14, bold=True, color=(WHITE if is_pilot else RED))
     add_text(s, reason, x+0.15, y_c+1.05, c_w-0.3, 0.6, size=9.5, color=sub, ls=1.25)
 
-# Bottom block: что отличает S3 от обычной кластеризации
-add_card(s, 0.5, 4.5, 12.33, 2.4, fill=VLIGHT)
-add_text(s, 'Что отличает S3 от обычной кластеризации городов', 0.85, 4.7, 12, 0.4, size=14, bold=True, color=DARK)
+# Bottom block: что отличает S3 от обычной кластеризации (компактнее)
+add_card(s, 0.5, 4.3, 12.33, 2.25, fill=VLIGHT)
+add_text(s, 'Что отличает S3 от обычной кластеризации городов', 0.85, 4.45, 12, 0.35, size=13, bold=True, color=DARK)
 
 points = [
     ('Воспроизводимая процедура',
      'Назначение режима — по фактическим KPI; пересмотр каждый сезон, а не статическая фиксация'),
     ('Однородные поля описания',
-     'Каждый режим описан через цель / условия / рычаги / KPI / ограничения — это делает сопоставимыми решения по разным городам'),
+     'Каждый режим описан через цель, условия, рычаги, KPI, ограничения — это делает сопоставимыми решения по разным городам'),
     ('Защита от копирования',
      'Конкуренту недостаточно воспроизвести матрицу — нужна функция портфельного управления и локальной адаптации (Reed, DeFillippi, 1990)'),
 ]
 for i, (h, b) in enumerate(points):
     x = 0.85 + i*4.05
-    add_text(s, h, x, 5.15, 3.8, 0.4, size=11.5, bold=True, color=RED)
-    add_text(s, b, x, 5.55, 3.8, 1.2, size=10.5, color=DARK, ls=1.3)
+    add_text(s, h, x, 4.85, 3.8, 0.4, size=11.5, bold=True, color=RED)
+    add_text(s, b, x, 5.25, 3.8, 1.25, size=10.5, color=DARK, ls=1.3)
 
+add_punchline(s, 'S3 — не статическая кластеризация, а воспроизводимая процедура с пересмотром каждый сезон')
 add_footer(s, 11, TOTAL)
 set_notes(s, 'Ключевая мысль: S3 — не статическая карта городов, а воспроизводимая процедура; именно это сложно скопировать конкуренту. '
               '«Выбранная стратегия — диверсификация режимов по портфелю. Её суть в том, что оператор переходит от единой логики ко всем рынкам '
@@ -669,6 +700,8 @@ for i, (code, name, purpose, fields) in enumerate(modes):
         add_text(s, f_b, x+0.25, fy+0.3, m_w-0.5, 0.55, size=11, color=DARK, ls=1.25)
         fy += 0.85
 
+add_punchline(s, 'Однородный набор полей описания делает диагностики разных городов сопоставимыми')
+
 add_footer(s, 12, TOTAL)
 set_notes(s, 'Ключевая мысль: три режима покрывают полный жизненный цикл; однородные поля описания делают решения сопоставимыми. '
               '«Содержательное наполнение S3 — система трёх режимов конкурентных действий. R1 "Плацдарм" — закрепление на новом рынке без атаки. '
@@ -680,25 +713,38 @@ set_notes(s, 'Ключевая мысль: три режима покрываю�
 s = add_slide()
 add_title(s, 'Проектный инструмент УПС: стимул в 4,5× дешевле физической ребалансировки', size=22)
 
-# Left: big number comparison
-add_card(s, 0.5, 1.85, 6.5, 4.7, fill=VLIGHT)
-add_text(s, 'Экономика операции по перемещению парка', 0.7, 2.0, 6.2, 0.4, size=12, color=GRAY)
+# Process flow strip (заимствование подачи v3)
+flow_steps = ['Сигнал дефицита', 'Отбор точки и окна', 'Выбор стимула', 'Доступность восстановлена']
+fy = 1.45; fh = 0.4
+fw = (12.33 - 3*0.15) / 4
+fx_start = 0.5
+for i, step in enumerate(flow_steps):
+    x = fx_start + i*(fw + 0.15)
+    add_card(s, x, fy, fw, fh, fill=LIGHT)
+    add_text(s, step, x, fy+0.1, fw, 0.25, size=10, bold=True, color=DARK, align=PP_ALIGN.CENTER)
+    if i < len(flow_steps)-1:
+        # Small arrow between cards
+        add_text(s, '→', x+fw+0.01, fy+0.07, 0.13, 0.3, size=14, bold=True, color=RED, align=PP_ALIGN.CENTER)
+
+# Left: big number comparison (compressed)
+add_card(s, 0.5, 2.0, 6.5, 4.55, fill=VLIGHT)
+add_text(s, 'Экономика операции по перемещению парка', 0.7, 2.15, 6.2, 0.4, size=12, color=GRAY)
 
 # 120 руб
-add_text(s, 'Физическая ребалансировка', 0.7, 2.5, 6.2, 0.4, size=12, bold=True, color=DARK)
-add_bignum(s, '120 ₽', 0.7, 2.85, 6.2, 1.0, size=58, color=DARK, align=PP_ALIGN.LEFT)
-add_text(s, 'за операцию, данные эксперта МТС', 0.7, 3.85, 6.2, 0.3, size=10, color=GRAY)
+add_text(s, 'Физическая ребалансировка', 0.7, 2.6, 6.2, 0.4, size=12, bold=True, color=DARK)
+add_bignum(s, '120 ₽', 0.7, 2.95, 6.2, 1.0, size=58, color=DARK, align=PP_ALIGN.LEFT)
+add_text(s, 'за операцию, данные эксперта МТС', 0.7, 3.95, 6.2, 0.3, size=10, color=GRAY)
 
 # vs
 add_text(s, '↓ замещение стимулом', 0.7, 4.3, 6.2, 0.3, size=11, color=GRAY, align=PP_ALIGN.CENTER)
 
 # 26,5 руб
-add_text(s, 'Средневзвешенная стоимость стимула УПС', 0.7, 4.7, 6.2, 0.4, size=12, bold=True, color=DARK)
-add_bignum(s, '26,5 ₽', 0.7, 5.05, 6.2, 1.0, size=58, color=RED, align=PP_ALIGN.LEFT)
-add_text(s, 'за операцию · в 4,5× дешевле', 0.7, 6.05, 6.2, 0.3, size=11, bold=True, color=RED)
+add_text(s, 'Средневзвешенная стоимость стимула УПС', 0.7, 4.65, 6.2, 0.4, size=12, bold=True, color=DARK)
+add_bignum(s, '26,5 ₽', 0.7, 5.0, 6.2, 1.0, size=58, color=RED, align=PP_ALIGN.LEFT)
+add_text(s, 'за операцию · в 4,5× дешевле', 0.7, 6.0, 6.2, 0.3, size=11, bold=True, color=RED)
 
 # Right: 3 mechanisms scheme
-add_text(s, 'Три механизма УПС', 7.4, 1.85, 5.5, 0.4, size=14, bold=True, color=DARK)
+add_text(s, 'Три механизма УПС (шаг «Выбор стимула»)', 7.4, 2.0, 5.5, 0.3, size=12, bold=True, color=DARK)
 
 mechs = [
     ('1', 'Стимул на стороне точки высадки',
@@ -708,11 +754,11 @@ mechs = [
     ('3', 'Микрозадание внешнему исполнителю',
      'Оплачиваемое перемещение в случаях, где пользовательских стимулов недостаточно'),
 ]
-my = 2.35
+my = 2.45
 for code, name, body in mechs:
-    add_card(s, 7.4, my, 5.5, 1.35, fill=LIGHT)
+    add_card(s, 7.4, my, 5.5, 1.25, fill=LIGHT)
     # Code circle (M + number on two lines via newline)
-    circle = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(7.55), Inches(my+0.3), Inches(0.75), Inches(0.75))
+    circle = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(7.55), Inches(my+0.25), Inches(0.75), Inches(0.75))
     circle.fill.solid(); circle.fill.fore_color.rgb = RED
     circle.line.fill.background()
     tb = circle.text_frame
@@ -722,15 +768,11 @@ for code, name, body in mechs:
     rr = pp.add_run(); rr.text = 'М' + code
     rr.font.name = FONT; rr.font.size = Pt(18); rr.font.bold = True
     rr.font.color.rgb = WHITE
-    add_text(s, name, 8.5, my+0.2, 4.3, 0.4, size=12, bold=True, color=DARK)
-    add_text(s, body, 8.5, my+0.6, 4.3, 0.7, size=10, color=GRAY, ls=1.3)
-    my += 1.45
+    add_text(s, name, 8.5, my+0.15, 4.3, 0.4, size=12, bold=True, color=DARK)
+    add_text(s, body, 8.5, my+0.55, 4.3, 0.65, size=10, color=GRAY, ls=1.3)
+    my += 1.35
 
-# Bottom
-add_card(s, 0.5, 6.65, 12.33, 0.45, fill=DARK)
-add_text(s, 'УПС применяется в режимах R2 и R3 — снижает потребность в физической ребалансировке, не отменяя её полностью',
-         0.5, 6.7, 12.33, 0.4, size=12, color=WHITE, align=PP_ALIGN.CENTER)
-
+add_punchline(s, 'УПС применяется в режимах R2 и R3, снижает физическую ребалансировку, не отменяя её полностью')
 add_footer(s, 13, TOTAL)
 set_notes(s, 'Ключевая мысль: проектный инструмент адресует ключевой фактор успеха — доступность покрытия — и при этом дешевле физической ребалансировки. '
               '«Проектный инструмент я назвал "Управление покрытием через стимулы". Это механизм, который замещает часть физической ребалансировки '
@@ -816,12 +858,11 @@ for h, big, sub in metrics:
     add_text(s, sub, mx+0.3, my2+0.65, mw-0.4, 0.22, size=8.5, color=GRAY)
     my2 += 0.83
 
-# Bottom: sensitivity
-add_card(s, 0.5, 6.4, 12.3, 0.7, fill=LIGHT)
-add_text(s, 'Чувствительность год 1', 0.7, 6.5, 3, 0.4, size=11, color=GRAY)
-add_text(s, 'Консервативный: −14 млн ₽   ·   Базовый: +25 млн ₽   ·   Оптимистичный: +64 млн ₽',
-         3.3, 6.55, 9, 0.4, size=13, bold=True, color=DARK)
+# Bottom: sensitivity (compressed) + punchline
+add_text(s, 'Чувствительность год 1:  −14 / +25 / +64 млн ₽',
+         0.5, 6.3, 12.3, 0.3, size=11, color=GRAY, align=PP_ALIGN.CENTER)
 
+add_punchline(s, 'S3 окупается за счёт перенастройки уже существующего портфеля — capex проекта всего 8 млн ₽')
 add_footer(s, 14, TOTAL)
 set_notes(s, 'Ключевая мысль: проект окупается за один сезон при минимальной капитальной интенсивности. '
               '«Затраты года 1 — около 48 миллионов рублей; capex составляет всего 8 миллионов на IT-инфраструктуру УПС, остальное операционные. '
@@ -892,6 +933,7 @@ for i, (risk, comp) in enumerate(risks):
     add_text(s, '→', x+2.95, y+0.1, 0.35, 0.45, size=14, bold=True, color=RED, align=PP_ALIGN.CENTER)
     add_text(s, comp, x+3.35, y+0.05, 2.55, 0.45, size=10, color=GRAY, ls=1.1)
 
+add_punchline(s, 'S3 не требует одномоментной перестройки — запускается через пилот за 5 месяцев')
 add_footer(s, 15, TOTAL)
 set_notes(s, 'Ключевая мысль: S3 не требует одномоментной перестройки; запускается через пилот, у каждого риска есть управленческий ответ. '
               '«Внедрение S3 идёт через пилот УПС в Екатеринбурге — пять месяцев от диагностики до итогов. С года 2 — тиражирование на четыре города R2-кластера. '
